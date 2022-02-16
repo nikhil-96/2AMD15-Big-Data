@@ -1,2 +1,2 @@
-# 2AMD15-Big-Data
-2AMD15 - Big Data Project
+# 2AMD15 Big-Data Project
+Discovery of multivariate correlations with three variables
