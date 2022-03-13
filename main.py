@@ -1,6 +1,5 @@
 import findspark
 findspark.init()
-import pyspark
 
 from pyspark import SparkContext
 from pyspark.conf import SparkConf
@@ -8,21 +7,23 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import StructType
 from pyspark.sql.types import StringType, FloatType, DoubleType
-from pyspark.sql.functions import PandasUDFType, pandas_udf
+# from pyspark.sql.functions import PandasUDFType, pandas_udf
 import numpy as np
 
-conf = SparkConf().setAppName("2AMD15-MS1_Part3")
+conf = SparkConf().setAppName("2AMD15-MS1_Part2").setMaster("local[*]")
 
-sc = SparkContext(conf=conf).getOrCreate()
-ss = SparkSession(sc).builder.config("spark.driver.memory", "6g").getOrCreate()
+# sc = SparkContext(conf=conf).getOrCreate()
+ss = SparkSession.builder.config(conf=conf).appName("Milestone 1 - Group 29").getOrCreate()
 
 import pyspark.sql.functions as f
 
 
 def main():
-    weather_df = ss.read.option('header', True).csv("weather-ta2.csv")
-    stocks_df = ss.read.option('header', True).csv("stocks-ta2.csv")
+    print("********* MS1 - part 1 ************")
+    weather_df = ss.read.option('header', True).csv("weather-ta2.csv").limit(10000)
+    stocks_df = ss.read.option('header', True).csv("stocks-ta2.csv").limit(10000)
 
+    print("********* MS1 - part 2 ************")
     weather_df.registerTempTable("df")
 
     mylist = ss.sql("""
@@ -91,21 +92,35 @@ def main():
     big_df = big_df.select('a.date', 'stock_name', 'combo_id', 'price', 'avg', 'min', 'max', 'cosine_sim')
 
     print("Big DF size: ", big_df.count())
+    bigdf_grouped = big_df.groupBy(["stock_name", 'combo_id']).agg(f.collect_list("price").alias('price'),
+                                                                   f.collect_list("avg").alias('avg'),
+                                                                   f.collect_list("min").alias('min'),
+                                                                   f.collect_list("max").alias('max'))
 
-    @pandas_udf(big_df.schema, PandasUDFType.GROUPED_MAP)
-    def cos_sim(df):
-        # Names of columns
-        a, b = "price", "avg"  # ('min', 'max', 'avg')
-        cosine_sim_col = "cosine_sim"
-        df[cosine_sim_col] = float(np.dot(df[a], df[b]) / (np.linalg.norm(df[a]) * np.linalg.norm(df[b])))
-        return df
+    def cosine(a, b):
+        return float(np.dot(np.array(a), np.array(b)) / (np.linalg.norm(np.array(a)) * np.linalg.norm(np.array(b))))
 
-    df_final = big_df.groupby(["stock_name", "combo_id"]).apply(cos_sim)
-    df_cosine = df_final.groupBy(["stock_name", "combo_id"]).agg(f.avg("cosine_sim").alias("cossim")).orderBy('cossim',
-                                ascending=False)
+    cosine_udf = f.udf(cosine, FloatType())
+    df_final = bigdf_grouped.select('stock_name', 'combo_id', cosine_udf('price', 'max').alias('price_max_cosine'),
+                                    cosine_udf('price', 'min').alias('price_min_cosine'),
+                                    cosine_udf('price', 'avg').alias('price_avg_cosine'))
 
-    print("𝜏 = 0.99")
-    df_cosine = df_cosine.filter(df_cosine.cossim > 0.99)
+    df_cosine = df_final.orderBy('price_avg_cosine', ascending=False)
+    print(df_cosine.show())
+    # @pandas_udf(big_df.schema, PandasUDFType.GROUPED_MAP)
+    # def cos_sim(df):
+    #     # Names of columns
+    #     a, b = "price", "avg"  # ('min', 'max', 'avg')
+    #     cosine_sim_col = "cosine_sim"
+    #     df[cosine_sim_col] = float(np.dot(df[a], df[b]) / (np.linalg.norm(df[a]) * np.linalg.norm(df[b])))
+    #     return df
+    #
+    # df_final = big_df.groupby(["stock_name", "combo_id"]).apply(cos_sim)
+    # df_cosine = df_final.groupBy(["stock_name", "combo_id"]).agg(f.avg("cosine_sim").alias("cossim")).orderBy('cossim',
+    #                             ascending=False)
+
+    print("Tau = 0.95")
+    df_cosine = df_cosine.filter(df_cosine.price_avg_cosine > 0.95)
     print("No. of results: ", df_cosine.count())
 
 
