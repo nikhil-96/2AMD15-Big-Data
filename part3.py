@@ -90,12 +90,14 @@ def main():
         return [stock, station1, station2, price_min, price_avg, price_max]
 
     results = agg.map(get_cosine)
+    results.cache()
 
     tau = [0.99, 0.993, 0.993]
 
     min_results = results.filter(lambda row: row[-3] > tau[0]).collect()
     avg_results = results.filter(lambda row: row[-2] > tau[1]).collect()
     max_results = results.filter(lambda row: row[-1] > tau[2]).collect()
+    results.unpersist()
 
     print("Results =>")
     print(f"Min Results(count={len(min_results)}): ", min_results)
