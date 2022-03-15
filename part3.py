@@ -9,7 +9,7 @@ from pyspark.sql.types import StringType, FloatType, DoubleType
 # from pyspark.sql.functions import PandasUDFType, pandas_udf
 import numpy as np
 
-conf = SparkConf().setAppName("2AMD15-MS1_Part2").setMaster("local[*]")
+conf = SparkConf().setAppName("2AMD15-MS1_Part3").setMaster("local[*]")
 
 sc = SparkContext(conf=conf).getOrCreate()
 ss = SparkSession.builder.config(conf=conf).appName("Milestone 1 - Group 29").getOrCreate()

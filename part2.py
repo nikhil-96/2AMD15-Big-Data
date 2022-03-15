@@ -20,8 +20,8 @@ import pyspark.sql.functions as f
 
 def main():
     print("********* MS1 - part 1 ************")
-    weather_df = ss.read.option('header', True).csv("weather-ta2.csv").limit(20000).repartition('station_id')
-    stocks_df = ss.read.option('header', True).csv("stocks-ta2.csv").limit(20000).repartition('date')
+    weather_df = ss.read.option('header', True).csv("/weather-ta2.csv").limit(20000).repartition('station_id')
+    stocks_df = ss.read.option('header', True).csv("/stocks-ta2.csv").limit(20000).repartition('date')
 
     print("********* MS1 - part 2 ************")
 
@@ -94,17 +94,6 @@ def main():
     bigdf_grouped.unpersist()
 
     print(df_final.show())
-    # @pandas_udf(big_df.schema, PandasUDFType.GROUPED_MAP)
-    # def cos_sim(df):
-    #     # Names of columns
-    #     a, b = "price", "avg"  # ('min', 'max', 'avg')
-    #     cosine_sim_col = "cosine_sim"
-    #     df[cosine_sim_col] = float(np.dot(df[a], df[b]) / (np.linalg.norm(df[a]) * np.linalg.norm(df[b])))
-    #     return df
-    #
-    # df_final = big_df.groupby(["stock_name", "combo_id"]).apply(cos_sim)
-    # df_cosine = df_final.groupBy(["stock_name", "combo_id"]).agg(f.avg("cosine_sim").alias("cossim")).orderBy('cossim',
-    #                             ascending=False)
 
 
     print("No. of results (max): ", df_final.filter(df_final.price_max_cosine > 0.90).count())
