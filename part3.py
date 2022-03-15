@@ -16,14 +16,20 @@ ss = SparkSession.builder.config(conf=conf).appName("Milestone 1 - Group 29").ge
 
 def main():
     print("********* MS1 - part 3 ************")
-    weather_df = ss.read.option('header', True).csv("weather-ta2.csv").limit(50000)
-    stocks_df = ss.read.option('header', True).csv("stocks-ta2.csv").limit(50000)
+    weather_df = sc.textFile("/weather-ta2.csv")
+    stocks_df = sc.textFile("/stocks-ta2.csv")
 
-    weather = weather_df.rdd
-    stocks = stocks_df.rdd
+    # Clean headers
+    header = weather_df.first()  # extract header
+    weather = weather_df.filter(lambda row: row != header).map(lambda line: line.split(","))
+    header = stocks_df.first()  # extract header
+    stocks = stocks_df.filter(lambda row: row != header).map(lambda line: line.split(","))
 
-    weather = weather.map(lambda x: [x[1], x[2], x[3]])
-    stocks = stocks.map(lambda x: [x[1], x[2], x[3]])
+    weather = weather.map(lambda x: [x[1], x[2], x[3]]).take(70000)
+    stocks = stocks.map(lambda x: [x[1], x[2], x[3]]).take(70000)
+
+    weather = sc.parallelize(weather, 5)
+    stocks = sc.parallelize(stocks, 5)
 
     df1 = weather.keyBy(lambda row: row[1])
 
@@ -85,7 +91,7 @@ def main():
 
     results = agg.map(get_cosine)
 
-    tau = [0.90, 0.90, 0.90]
+    tau = [0.99, 0.993, 0.993]
 
     min_results = results.filter(lambda row: row[-3] > tau[0]).collect()
     avg_results = results.filter(lambda row: row[-2] > tau[1]).collect()
