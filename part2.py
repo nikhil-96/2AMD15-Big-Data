@@ -20,8 +20,8 @@ import pyspark.sql.functions as f
 
 def main():
     print("********* MS1 - part 1 ************")
-    weather_df = ss.read.option('header', True).csv("/weather-ta2.csv").limit(20000).repartition('station_id')
-    stocks_df = ss.read.option('header', True).csv("/stocks-ta2.csv").limit(20000).repartition('date')
+    weather_df = ss.read.option('header', True).csv("/weather-ta2.csv").limit(100000).repartition('station_id')
+    stocks_df = ss.read.option('header', True).csv("/stocks-ta2.csv").limit(100000).repartition('date')
 
     print("********* MS1 - part 2 ************")
 
@@ -93,12 +93,12 @@ def main():
 
     bigdf_grouped.unpersist()
 
-    print(df_final.show())
+    #print(df_final.show())
 
-
-    print("No. of results (max): ", df_final.filter(df_final.price_max_cosine > 0.90).count())
-    print("No. of results (min): ", df_final.filter(df_final.price_min_cosine > 0.90).count())
-    print("No. of results (avg): ", df_final.filter(df_final.price_avg_cosine > 0.90).count())
+    tau = [0.99905, 0.99927, 0.99932]
+    print("No. of results (max): ", df_final.filter(df_final.price_max_cosine > tau[0]).count())
+    print("No. of results (min): ", df_final.filter(df_final.price_min_cosine > tau[1]).count())
+    print("No. of results (avg): ", df_final.filter(df_final.price_avg_cosine > tau[2]).count())
 
 
 if __name__ == "__main__":

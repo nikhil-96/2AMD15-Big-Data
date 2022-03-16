@@ -25,8 +25,8 @@ def main():
     header = stocks_df.first()  # extract header
     stocks = stocks_df.filter(lambda row: row != header).map(lambda line: line.split(","))
 
-    weather = weather.map(lambda x: [x[1], x[2], x[3]]).take(70000)
-    stocks = stocks.map(lambda x: [x[1], x[2], x[3]]).take(70000)
+    weather = weather.map(lambda x: [x[1], x[2], x[3]]).take(100000)
+    stocks = stocks.map(lambda x: [x[1], x[2], x[3]]).take(100000)
 
     weather = sc.parallelize(weather, 5)
     stocks = sc.parallelize(stocks, 5)
@@ -92,7 +92,7 @@ def main():
     results = agg.map(get_cosine)
     results.cache()
 
-    tau = [0.99, 0.993, 0.993]
+    tau = [0.99905, 0.99927, 0.99932]
 
     min_results = results.filter(lambda row: row[-3] > tau[0]).collect()
     avg_results = results.filter(lambda row: row[-2] > tau[1]).collect()
