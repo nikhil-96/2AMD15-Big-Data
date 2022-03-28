@@ -19,7 +19,7 @@ lines = ssc.socketTextStream("stream-host", 9000)
 import numpy as np
 # from scipy import sparse
 
-def get_vals(w: int = 5):
+def get_vals(w: int = int(np.ceil(np.log(1/0.01)))):
     coefs = np.random.randint(1, 1000, (w,w))
     p = np.random.randint(3000, 100000, w)
     return coefs, p + ~(p % 2).astype(bool)
@@ -27,7 +27,7 @@ def get_vals(w: int = 5):
 def fit_poly(row, x):
     return np.poly1d(row)(x)
 
-def cm_multihash(x: int, counts: int, coefs, p, const: int = 2719):
+def cm_multihash(x: int, counts: int, coefs, p, const: int = int(np.ceil(np.e/0.001))):
     table = np.zeros((p.shape[0], const))
     j = ((np.apply_along_axis(fit_poly, 1, coefs, x) % p) % const).astype(int)
     table[np.arange(0, p.shape[0]),j] = counts
