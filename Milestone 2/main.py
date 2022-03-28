@@ -17,7 +17,7 @@ ssc.checkpoint("checkpoint")
 lines = ssc.socketTextStream("stream-host", 9000)
 
 import numpy as np
-from scipy import sparse
+# from scipy import sparse
 
 def get_vals(w: int = 5):
     coefs = np.random.randint(1, 1000, (w,w))
@@ -31,10 +31,10 @@ def cm_multihash(x: int, counts: int, coefs, p, const: int = 2719):
     table = np.zeros((p.shape[0], const))
     j = ((np.apply_along_axis(fit_poly, 1, coefs, x) % p) % const).astype(int)
     table[np.arange(0, p.shape[0]),j] = counts
-    return sparse.csr_matrix(table)
+    return table
 
-def sparse_sim(sk1: sparse.csr.csr_matrix, sk2: sparse.csr.csr_matrix):
-    return sk1.multiply(sk2).sum(axis = 1).min()
+def sparse_sim(sk1, sk2):
+    return np.multiply(sk1,sk2).sum(axis = 1).min()
 
 coefs, p = get_vals()
 
